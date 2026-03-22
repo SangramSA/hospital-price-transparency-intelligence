@@ -1,0 +1,5 @@
+# Editable install from pyproject.toml (runtime + build). Prefer:
+#   pip install -e ".[dev]"
+#
+# If you need a flat lockfile later, generate with pip-tools from pyproject.toml.
+-e .[dev]

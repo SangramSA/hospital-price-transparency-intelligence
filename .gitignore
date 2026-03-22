@@ -1,0 +1,48 @@
+# Bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Local secrets and overrides
+.env
+
+# Editors
+.idea/
+*.swp
+.DS_Store
+
+# Cursor / VS Code (local tooling; not tracked)
+.cursor/
+.vscode/
+
+# Redundant archive (rules stay local under .cursor/)
+cursor-rules.zip
+
+# Assessment / working materials (keep locally; not in version control)
+docs/Sangram_Data Engineering Assessment_March 2026.pdf
+docs/hospital_data_discovery_and_pipeline_reference.docx
+docs/MRF URL Comparison.xlsx
+data/Medicare Inpatient Hospitals - by Provider and Service Data Dictionary.pdf
+
+# Large MRF artifacts (keep directory placeholders)
+data/raw/**/*
+!data/raw/.gitkeep
+
+# Generated pipeline outputs (keep directory placeholders)
+data/processed/**/*
+!data/processed/.gitkeep
