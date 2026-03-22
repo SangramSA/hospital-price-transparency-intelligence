@@ -1,0 +1,12 @@
+location-name: Test Orthopedic Hospital
+source-page-url: https://example.org/transparency
+mrf-url: https://example.org/files/12-3456789_test-orthopedic-hospital_standardcharges.csv
+contact-name: Jane Doe
+contact-email: jane@example.org
+
+location-name: Test General Hospital
+source-page-url: https://example.org/transparency
+mrf-url: https://example.org/files/98-7654321_test-general-hospital_standardcharges.json
+contact-name: Jane Doe
+contact-email: jane@example.org
+
