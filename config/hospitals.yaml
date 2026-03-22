@@ -1,0 +1,150 @@
+# Hospital roster and discovery endpoints from
+# docs/hospital_data_discovery_and_pipeline_reference.docx (Table 2).
+#
+# CCN and CMS joins use transparency/MRF header fields mapped to
+# data/cms_knee_replacement_by_provider.csv per docs/regulatory-and-assessment-reference.md —
+# not duplicated here.
+#
+# Discovery order:
+#   1. Use mrf_url as the primary machine-readable file download.
+#   2. If that fails (404, expired SAS token, etc.), fetch cms_hpt_index_url, parse the
+#      mandated index for current MRF location(s) and/or follow source_page_url, then retry.
+#   3. Warren Memorial has no cms-hpt.txt (per reference doc); use mrf_url / site navigation only.
+
+version: 1
+
+hospitals:
+  - hospital_key: nyu-langone-orthopedic-hospital
+    hospital_name: NYU Langone Orthopedic Hospital
+    state: NY
+    tier: 1
+    website_root: "https://nyulangone.org"
+    cms_hpt_index_url: "https://nyulangone.org/cms-hpt.txt"
+    mrf_url: "https://standard-charges-prod.s3.amazonaws.com/pricing_files/133971298-1669578324_nyu-langone-orthopedic-hospital_standardcharges.csv"
+    source_page_url: "https://med.nyu.edu/standard-charges/"
+
+  - hospital_key: new-england-baptist-hospital
+    hospital_name: New England Baptist Hospital
+    state: MA
+    tier: 1
+    website_root: "https://nebh.org"
+    cms_hpt_index_url: "https://nebh.org/cms-hpt.txt"
+    mrf_url: "https://nebh.org/042103612_new-england-baptist-hospital_standardcharges.json"
+    source_page_url: "https://nebh.org/patients-visitors/billing-financial-services/price-transparency"
+
+  - hospital_key: baylor-scott-white-ortho-spine-arlington
+    hospital_name: BSW Orthopedic & Spine – Arlington
+    state: TX
+    tier: 1
+    website_root: "https://bswarlington.com"
+    cms_hpt_index_url: "https://bswarlington.com/cms-hpt.txt"
+    mrf_url: "https://mrfs.hyvehealthcare.com/USPI/261578178_BaylorOrthopedicandSpineHospitalatArlington_standardcharges.json"
+    source_page_url: "https://bswarlington.com/patients-visitors/hospital-pricing-information/"
+
+  - hospital_key: novant-health-forsyth-medical-center
+    hospital_name: Novant Health Forsyth Medical Center
+    state: NC
+    tier: 1
+    website_root: "https://novanthealth.org"
+    cms_hpt_index_url: "https://novanthealth.org/cms-hpt.txt"
+    mrf_url: "https://www2.novanthealth.org/Public_Files/regulatory/56-0928089_novant_health_forsyth_medical_center_standardcharges.csv"
+    source_page_url: "https://www.novanthealth.org/for-patients/billing--insurance/price-transparency/"
+
+  - hospital_key: ascension-st-vincent-evansville
+    hospital_name: Ascension St. Vincent Evansville
+    state: IN
+    tier: 2
+    website_root: "https://healthcare.ascension.org"
+    cms_hpt_index_url: "https://healthcare.ascension.org/cms-hpt.txt"
+    mrf_url: "https://healthcare.ascension.org/-/media/project/ascension/healthcare/price-transparency-files/in-csv/350869065_st-marys-health-inc_standardcharges.csv"
+    source_page_url: "https://healthcare.ascension.org/price-transparency"
+
+  - hospital_key: hoag-orthopedic-institute
+    hospital_name: Hoag Orthopedic Institute
+    state: CA
+    tier: 2
+    website_root: "https://www.hoagorthopedicinstitute.com"
+    cms_hpt_index_url: "https://www.hoagorthopedicinstitute.com/cms-hpt.txt"
+    mrf_url: "https://www.hoagorthopedicinstitute.com/documents/611588294_hoag-orthopedic-institute_standardcharges.csv"
+    source_page_url: "https://www.hoagorthopedicinstitute.com/for-patients/billing-and-insurance/"
+
+  - hospital_key: atlanticare-regional-medical-center
+    hospital_name: Atlanticare Regional Medical Center
+    state: NJ
+    tier: 2
+    website_root: "https://www.atlanticare.org"
+    cms_hpt_index_url: "https://www.atlanticare.org/cms-hpt.txt"
+    mrf_url: "https://atlanticare.pt.panaceainc.com/MRFDownload/atlanticare/atlanticare"
+    source_page_url: "https://www.atlanticare.org/patients-and-visitors/for-patients/billing-and-insurance/hospital-charge-list/"
+
+  - hospital_key: merit-health-river-oaks
+    hospital_name: Merit Health River Oaks
+    state: MS
+    tier: 2
+    website_root: "https://www.merithealthriveroaks.com"
+    cms_hpt_index_url: "https://www.merithealthriveroaks.com/cms-hpt.txt"
+    mrf_url: "https://www.merithealthriveroaks.com/Uploads/Public/Documents/charge-masters/charge-masters-2024/640626874_merit-health-river-oaks_standardcharges.csv"
+    source_page_url: "https://www.merithealthriveroaks.com/pricing-information"
+
+  - hospital_key: oak-hill-hospital
+    hospital_name: HCA Florida Oak Hill Hospital
+    state: FL
+    tier: 2
+    website_root: "https://www.hcafloridahealthcare.com"
+    cms_hpt_index_url: "https://www.hcafloridahealthcare.com/cms-hpt.txt"
+    mrf_url: "https://stctrprodsnsvc00455826e6.blob.core.windows.net/pt-final-posting-files/62-1113740_HCA-FLORIDA-OAK-HILL-HOSPITAL_standardcharges.json?si=pt-json-access-policy&spr=https&sv=2024-11-04&sr=c&sig=o5IofreS%2F7ETlsnhPakPWCwHVVUZRobywQ5wUKGjVuQ%3D"
+    source_page_url: "https://www.hcafloridahealthcare.com/patient-resources/patient-financial-resources/pricing-transparency-cms-required-file-of-standard-charges"
+
+  - hospital_key: piedmont-hospital-atlanta
+    hospital_name: Piedmont Hospital (Atlanta)
+    state: GA
+    tier: 2
+    website_root: "https://www.piedmont.org"
+    cms_hpt_index_url: "https://www.piedmont.org/cms-hpt.txt"
+    mrf_url: "https://www.piedmont.org/-/media/files/patients-and-visitors/price-estimates/price-estimates-2026/580566213_piedmont-atlanta-hospital_standardcharges.csv"
+    source_page_url: "https://www.piedmont.org/patients-and-visitors/price-estimates"
+
+  - hospital_key: honorhealth-deer-valley-medical-center
+    hospital_name: HonorHealth Deer Valley Medical Center
+    state: AZ
+    tier: 2
+    website_root: "https://www.honorhealth.com"
+    cms_hpt_index_url: "https://www.honorhealth.com/cms-hpt.txt"
+    mrf_url: "https://www.honorhealth.com/sites/default/files/2023-12/860181654_honorhealthdvmc_standardcharges.csv"
+    source_page_url: "https://www.honorhealth.com/patients-visitors/average-pricing"
+
+  - hospital_key: hillcrest-hospital-south
+    hospital_name: Hillcrest Hospital South
+    state: OK
+    tier: 3
+    website_root: "https://hillcrestsouth.com"
+    cms_hpt_index_url: "https://hillcrestsouth.com/cms-hpt.txt"
+    mrf_url: "https://coc.ardenthealthservices.com/oklahoma/45-2711804_Hillcrest-Hospital-South_standardcharges.csv"
+    source_page_url: "https://hillcrest.com/policies-and-disclosures/price-transparency"
+
+  - hospital_key: warren-memorial-hospital
+    hospital_name: Warren Memorial Hospital
+    state: VA
+    tier: 3
+    website_root: "https://www.valleyhealthlink.com"
+    cms_hpt_index_url: null
+    mrf_url: "https://www.valleyhealthlink.com/app/files/public/bc97a127-6707-47f7-89da-e450c0072f1b/YourVisit/540488103_warren-memorial-hospital-inc_standardcharges.csv"
+    source_page_url: null
+
+  - hospital_key: grayling-hospital
+    hospital_name: Grayling Hospital
+    state: MI
+    tier: 3
+    website_root: "https://www.munsonhealthcare.org"
+    cms_hpt_index_url: "https://www.munsonhealthcare.org/cms-hpt.txt"
+    mrf_url: "https://www.munsonhealthcare.org/sites/default/files/hpt/471161992_munson-healthcare-grayling_standardcharges_1.csv"
+    source_page_url: "https://www.munsonhealthcare.org/patients-visitors/munson-healthcare-chargemaster-information"
+
+  - hospital_key: adventist-health-reedley
+    hospital_name: Adventist Health Reedley
+    state: CA
+    tier: 3
+    website_root: "https://www.adventisthealth.org"
+    cms_hpt_index_url: "https://www.adventisthealth.org/cms-hpt.txt"
+    mrf_url: "https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbAHRREEDLEYCA&type=CDMWithoutLabel&fileType=CSV"
+    source_page_url: "https://www.adventisthealth.org/patients-and-visitors/price-transparency/"
