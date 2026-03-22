@@ -1,4 +1,4 @@
-.PHONY: venv install install-dev test lint format typecheck pre-commit
+.PHONY: venv install install-dev test coverage lint format typecheck pre-commit
 
 PYTHON ?= python3.11
 VENV ?= .venv
@@ -15,6 +15,9 @@ install-dev: venv
 
 test:
 	pytest
+
+coverage:
+	pytest --cov=hpt --cov-report=term-missing
 
 lint:
 	ruff check src tests
