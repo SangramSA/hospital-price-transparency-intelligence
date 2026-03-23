@@ -1,9 +1,9 @@
 # Hospital roster and discovery endpoints from
 # docs/hospital_data_discovery_and_pipeline_reference.docx (Table 2).
 #
-# CCN and CMS joins use transparency/MRF header fields mapped to
-# data/cms_knee_replacement_by_provider.csv per docs/regulatory-and-assessment-reference.md —
-# not duplicated here.
+# CMS join key is Rndrng_Prvdr_CCN in data/cms_knee_replacement_by_provider.csv.
+# Assumption for this project: each hospital has a curated CCN in this roster
+# (or null when unavailable), and joins use this config CCN directly.
 #
 # Discovery order:
 #   1. Use mrf_url as the primary machine-readable file download.
@@ -17,6 +17,7 @@ hospitals:
   - hospital_key: nyu-langone-orthopedic-hospital
     hospital_name: NYU Langone Orthopedic Hospital
     state: NY
+    ccn: "330214"
     tier: 1
     website_root: "https://nyulangone.org"
     cms_hpt_index_url: "https://nyulangone.org/cms-hpt.txt"
@@ -26,6 +27,7 @@ hospitals:
   - hospital_key: new-england-baptist-hospital
     hospital_name: New England Baptist Hospital
     state: MA
+    ccn: "220088"
     tier: 1
     website_root: "https://nebh.org"
     cms_hpt_index_url: "https://nebh.org/cms-hpt.txt"
@@ -35,6 +37,7 @@ hospitals:
   - hospital_key: baylor-scott-white-ortho-spine-arlington
     hospital_name: BSW Orthopedic & Spine – Arlington
     state: TX
+    ccn: "670067"
     tier: 1
     website_root: "https://bswarlington.com"
     cms_hpt_index_url: "https://bswarlington.com/cms-hpt.txt"
@@ -44,6 +47,7 @@ hospitals:
   - hospital_key: novant-health-forsyth-medical-center
     hospital_name: Novant Health Forsyth Medical Center
     state: NC
+    ccn: "340014"
     tier: 1
     website_root: "https://novanthealth.org"
     cms_hpt_index_url: "https://novanthealth.org/cms-hpt.txt"
@@ -53,6 +57,7 @@ hospitals:
   - hospital_key: ascension-st-vincent-evansville
     hospital_name: Ascension St. Vincent Evansville
     state: IN
+    ccn: "150100"
     tier: 2
     website_root: "https://healthcare.ascension.org"
     cms_hpt_index_url: "https://healthcare.ascension.org/cms-hpt.txt"
@@ -62,6 +67,7 @@ hospitals:
   - hospital_key: hoag-orthopedic-institute
     hospital_name: Hoag Orthopedic Institute
     state: CA
+    ccn: "050769"
     tier: 2
     website_root: "https://www.hoagorthopedicinstitute.com"
     cms_hpt_index_url: "https://www.hoagorthopedicinstitute.com/cms-hpt.txt"
@@ -71,6 +77,7 @@ hospitals:
   - hospital_key: atlanticare-regional-medical-center
     hospital_name: Atlanticare Regional Medical Center
     state: NJ
+    ccn: "310064"
     tier: 2
     website_root: "https://www.atlanticare.org"
     cms_hpt_index_url: "https://www.atlanticare.org/cms-hpt.txt"
@@ -80,6 +87,7 @@ hospitals:
   - hospital_key: merit-health-river-oaks
     hospital_name: Merit Health River Oaks
     state: MS
+    ccn: "250138"
     tier: 2
     website_root: "https://www.merithealthriveroaks.com"
     cms_hpt_index_url: "https://www.merithealthriveroaks.com/cms-hpt.txt"
@@ -89,6 +97,7 @@ hospitals:
   - hospital_key: oak-hill-hospital
     hospital_name: HCA Florida Oak Hill Hospital
     state: FL
+    ccn: "100264"
     tier: 2
     website_root: "https://www.hcafloridahealthcare.com"
     cms_hpt_index_url: "https://www.hcafloridahealthcare.com/cms-hpt.txt"
@@ -98,6 +107,7 @@ hospitals:
   - hospital_key: piedmont-hospital-atlanta
     hospital_name: Piedmont Hospital (Atlanta)
     state: GA
+    ccn: "110083"
     tier: 2
     website_root: "https://www.piedmont.org"
     cms_hpt_index_url: "https://www.piedmont.org/cms-hpt.txt"
@@ -107,6 +117,7 @@ hospitals:
   - hospital_key: honorhealth-deer-valley-medical-center
     hospital_name: HonorHealth Deer Valley Medical Center
     state: AZ
+    ccn: "030092"
     tier: 2
     website_root: "https://www.honorhealth.com"
     cms_hpt_index_url: "https://www.honorhealth.com/cms-hpt.txt"
@@ -116,6 +127,7 @@ hospitals:
   - hospital_key: hillcrest-hospital-south
     hospital_name: Hillcrest Hospital South
     state: OK
+    ccn: "370202"
     tier: 3
     website_root: "https://hillcrestsouth.com"
     cms_hpt_index_url: "https://hillcrestsouth.com/cms-hpt.txt"
@@ -125,6 +137,7 @@ hospitals:
   - hospital_key: warren-memorial-hospital
     hospital_name: Warren Memorial Hospital
     state: VA
+    ccn: "490033"
     tier: 3
     website_root: "https://www.valleyhealthlink.com"
     cms_hpt_index_url: null
@@ -134,6 +147,7 @@ hospitals:
   - hospital_key: grayling-hospital
     hospital_name: Grayling Hospital
     state: MI
+    ccn: null
     tier: 3
     website_root: "https://www.munsonhealthcare.org"
     cms_hpt_index_url: "https://www.munsonhealthcare.org/cms-hpt.txt"
@@ -143,6 +157,7 @@ hospitals:
   - hospital_key: adventist-health-reedley
     hospital_name: Adventist Health Reedley
     state: CA
+    ccn: null
     tier: 3
     website_root: "https://www.adventisthealth.org"
     cms_hpt_index_url: "https://www.adventisthealth.org/cms-hpt.txt"
