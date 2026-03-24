@@ -112,12 +112,60 @@ Aligned with common **medallion-style** practice (raw → cleaned → curated), 
 
 | Layer      | In this repo                | Primary artifacts                                                                    | Data quality (examples)                                                    | Lineage (examples)                                                                                 |
 | ---------- | --------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Bronze** | Acquisition                 | `data/raw/{hospital_key}/`, download `manifest.json`                                 | File size, hash, HTTP success, encoding/BOM                                | `source_url`, `content_sha256`, `downloaded_at`                                                    |
-| **Silver** | Parse + extract + normalize | Per-hospital extract (e.g. JSONL/Parquet/CSV under `data/processed/` as implemented) | Parse errors, null spikes, unmapped columns, procedure `match_method`      | `source_file_name`, `source_row_index` or JSON item path, `extractor_id` / version                 |
-| **Gold**   | CMS join + export           | `data/processed/combined.{csv,json}`, optional QA summary                            | Match rate (`matched_ccn_roster` vs `no_match`), ratio comparability flags | `cms_snapshot_id` or file hash, `cms_match_status`, `cms_match_confidence`, pipeline / git version |
+| **Bronze** | Acquisition                 | `data/raw/{hospital_key}/`, download `manifest.json`                                 | File size, hash, HTTP success/`http_status`, transport metadata, encoding/BOM                | `source_url`, `content_sha256`, `downloaded_at`, `http_status`, optional `etag`, optional `last_modified`, `local_path`                                                    |
+| **Silver** | Parse + extract + normalize | Per-hospital extract (e.g. JSONL/Parquet/CSV under `data/processed/` as implemented) | Parse errors, null spikes, unmapped columns, procedure `match_method`, parse-time DQ flags | `source_file_name`, `source_row_index` (CSV) or `source_json_path` (JSON), `parser_strategy`, `extractor_version`, `dq_flags` |
+| **Gold**   | CMS join + export           | `data/processed/combined.{csv,json}`, optional QA summary                            | Match rate (`matched_ccn_roster` vs `no_match`), ratio comparability flags | `cms_snapshot_hash`, `cms_match_status`, `cms_match_confidence`, pipeline / git version |
 
 
 **Principle:** Row-level **DQ flags** and **provenance** are introduced as early as possible (at least by end of Silver); Gold adds **dataset-level** summaries. Neither replaces the README narrative for stakeholders.
+
+---
+
+## Stage Contracts (Implementation-Ready)
+
+This section is the concrete “contract surface” between pipeline layers. Each stage must satisfy the required metadata fields so extracted rows can be traced back to raw bytes.
+
+### Bronze — Discovery + Download (raw landing)
+Required manifest fields (per hospital artifact):
+- `source_url`
+- `downloaded_at` (ISO-8601 UTC)
+- `content_sha256` (sha256 of downloaded bytes)
+- `http_status` (HTTP status code from the download attempt)
+- `etag` (optional)
+- `last_modified` (optional)
+- `local_path` (absolute or repo-relative path to the active raw artifact)
+
+### Silver — Parse + Extract + Normalize (canonical rows)
+Required per-row lineage fields:
+- `source_row_index` (CSV row index for the matched procedure/item line) or `source_json_path` (stable JSON path derived during streaming)
+- `parser_strategy` (e.g. `csv_wide_standardcharges`, `json_nested_standard_charge_information`)
+- `extractor_version` (git SHA or package version stamped at extraction time)
+- `dq_flags` (pipe-delimited or list of explicit parse/semantic issues; empty/null is “no flags”)
+
+### Gold — Join + Export (dataset serving)
+Required dataset/reproducibility fields:
+- `cms_snapshot_hash` (hash of the CMS file used for the join)
+- `pipeline_version` (code version / git SHA)
+- `output_schema_version` (explicit schema version)
+
+### Determinism policy (`extracted_at`)
+`extracted_at` is generated at extraction time (UTC ISO-8601) and is **run-time metadata**.
+For idempotency and deterministic row comparisons, it must be treated as **non-deterministic**:
+- exclude `extracted_at` from equality checks
+- compare deterministic fields (source lineage + extracted numeric fields + parser/extractor strategy + CMS snapshot hash)
+
+### Data quality taxonomy (DQ flags)
+DQ flags are always interpretable using this taxonomy:
+- Structural DQ: parse/layout problems (missing columns, unexpected nested shapes, parse failures).
+- Semantic DQ: negotiated-rate meaning problems (e.g., negotiated dollar missing, unparsable, or non-comparable rate types).
+- Join DQ: join failures/ambiguity under CCN-first policy (represented primarily via `cms_match_status` and `cms_ccn` rather than `dq_flags`).
+
+Semantic DQ (`dq_flags`) code semantics (pipe-delimited strings in exports; empty/null means “no flags”):
+- `algorithm_only_rate`: negotiated dollar amount is missing (`negotiated_amount` is null) while a rate-algorithm/string exists in `rate_raw`.
+- `zero_negotiated_rate`: negotiated dollar amount exists and parses to exactly `0`.
+- `unparseable_numeric` (reserved): numeric conversion for negotiated dollar failed; original text preserved in `rate_raw`.
+- `missing_payer_name` (reserved): payer block is malformed and a payer name cannot be recovered reliably.
+- `percent_of_charges_noncomparable` (reserved): rate type indicates percent-of-charges (or similar) where conversion to a comparable negotiated dollar is not available; downstream ratios should be treated as not comparable.
 
 ---
 
@@ -219,7 +267,12 @@ Aligned with common **medallion-style** practice (raw → cleaned → curated), 
 | `entity_resolution_method` | string nullable   | `config_ccn` for matched hospitals.                                                        |
 | `source_file_url`          | string nullable   | Download URL.                                                                              |
 | `source_file_name`         | string nullable   | Local basename.                                                                            |
-| `extracted_at`             | string (ISO-8601) | UTC timestamp of extraction run (document whether this participates in idempotency tests). |
+| `source_row_index`         | integer nullable   | CSV row index for the matched procedure/item line (index definition fixed by extractor). |
+| `source_json_path`         | string nullable    | JSON path (stable item path) for the matched standard-charge entry.                  |
+| `parser_strategy`          | string nullable    | Parser/extraction strategy tag (e.g. `csv_wide_standardcharges`, `json_nested_standard_charge_information`). |
+| `extractor_version`       | string nullable    | Version identifier for extraction logic (git SHA or package version).                 |
+| `dq_flags`                 | string nullable    | Pipe-delimited DQ flags encountered during parse/extract/normalize (e.g. `algorithm_only_rate|unparseable_numeric`). |
+| `extracted_at`             | string (ISO-8601) | UTC timestamp of extraction run; run-time metadata excluded from deterministic row equality checks. |
 | `cms_snapshot_hash`        | string nullable   | Hash of the CMS knee CSV used for the join (reproducibility).                              |
 
 
@@ -239,6 +292,11 @@ Aligned with common **medallion-style** practice (raw → cleaned → curated), 
   "rate_type": "negotiated",
   "negotiated_amount": 42000.0,
   "implant_manufacturer": null,
+  "source_row_index": 12345,
+  "source_json_path": null,
+  "parser_strategy": "csv_wide_standardcharges",
+  "extractor_version": "v0.1.0",
+  "dq_flags": "algorithm_only_rate",
   "cms_avg_mdcr_pymt_amt": 14000.0,
   "commercial_to_medicare_ratio": 3.0,
   "cms_match_status": "matched_ccn_roster",

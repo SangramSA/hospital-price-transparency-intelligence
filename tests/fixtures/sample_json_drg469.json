@@ -1,0 +1,31 @@
+{
+  "hospital_name": "Example Hospital",
+  "hospital_location": ["Example Hospital"],
+  "hospital_address": ["123 Main St, Testville, ZZ 00000"],
+  "license_information": { "license_number": "0000", "state": "ZZ" },
+  "standard_charge_information": [
+    {
+      "description": "Major Hip And Knee Joint Replacement Or Reattachment Of Lower Extremity With Mcc",
+      "code_information": [{ "code": "469", "type": "MS-DRG" }],
+      "standard_charges": [
+        {
+          "setting": "both",
+          "billing_class": "facility",
+          "minimum": 12345.67,
+          "maximum": 23456.78,
+          "payers_information": [
+            {
+              "payer_name": "Medicare",
+              "plan_name": "Medicare",
+              "estimated_amount": 17000.0,
+              "methodology": "other",
+              "standard_charge_algorithm": "Conditional payment logic at the claim level...",
+              "additional_payer_notes": "Some algorithm notes"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
