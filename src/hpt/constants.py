@@ -34,6 +34,15 @@ DEFAULT_USER_AGENT = (
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 hpt/0.1"
 )
 
+# Gold export: bump when `combined.csv` column set or semantics change (see `docs/design.md`).
+OUTPUT_SCHEMA_VERSION = "1"
+
 # Raw artifact filenames
 CMS_HPT_LOCAL_NAME = "cms-hpt.txt"
 MANIFEST_JSON_NAME = "manifest.json"
+
+# Processed / Gold artifact names
+COMBINED_CSV_NAME = "combined.csv"
+COMBINED_JSONL_NAME = "combined.jsonl"
+QA_SUMMARY_JSON_NAME = "qa_summary.json"
+EXPORT_METADATA_JSON_NAME = "export_metadata.json"
