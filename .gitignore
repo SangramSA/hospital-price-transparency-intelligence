@@ -46,3 +46,10 @@ data/raw/**/*
 # Generated pipeline outputs (keep directory placeholders)
 data/processed/**/*
 !data/processed/.gitkeep
+
+# Silver-layer canonical JSONL and batch reports (regenerate via extract)
+data/silver/**/*
+!data/silver/.gitkeep
+
+# Local CSV profiling / scratch (not source)
+tmp_csv_*.json
