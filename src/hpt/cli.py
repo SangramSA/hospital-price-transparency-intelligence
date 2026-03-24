@@ -11,6 +11,7 @@ from hpt import __version__
 from hpt.config import default_hospitals_config_path
 from hpt.discovery import run_discover
 from hpt.download import run_download
+from hpt.join import run_join
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -70,6 +71,43 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_dl.set_defaults(_handler=_cmd_download)
 
+    p_join = sub.add_parser(
+        "join",
+        help="Join silver canonical rows to CMS knee benchmarks",
+    )
+    p_join.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to hospitals.yaml (default: config/hospitals.yaml or HPT_HOSPITALS_CONFIG)",
+    )
+    p_join.add_argument(
+        "--hospital",
+        action="append",
+        dest="hospitals",
+        metavar="HOSPITAL_KEY",
+        help="Limit to one or more hospital_key values (repeatable)",
+    )
+    p_join.add_argument(
+        "--cms-path",
+        type=Path,
+        default=None,
+        help="Path to CMS knee replacement CSV (default: data/cms_knee_replacement_by_provider.csv or HPT_CMS_KNEE_CSV_PATH)",
+    )
+    p_join.add_argument(
+        "--silver-dir",
+        type=Path,
+        default=None,
+        help="Silver input root (default: data/silver or HPT_SILVER_DIR)",
+    )
+    p_join.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Output root for joined JSONL files (default: data/processed or HPT_PROCESSED_DIR)",
+    )
+    p_join.set_defaults(_handler=_cmd_join)
+
     return parser
 
 
@@ -91,6 +129,20 @@ def _cmd_download(args: argparse.Namespace) -> int:
     cfg = args.config or default_hospitals_config_path()
     results = run_download(hospital_keys=keys, config_path=cfg, force=args.force)
     failed = sum(1 for _, p in results if p is None)
+    return 1 if failed else 0
+
+
+def _cmd_join(args: argparse.Namespace) -> int:
+    keys = _hospital_key_set(args)
+    cfg = args.config or default_hospitals_config_path()
+    results = run_join(
+        hospital_keys=keys,
+        config_path=cfg,
+        cms_path=args.cms_path,
+        silver_root=args.silver_dir,
+        output_root=args.output_dir,
+    )
+    failed = sum(1 for _, rows in results if not rows)
     return 1 if failed else 0
 
 
