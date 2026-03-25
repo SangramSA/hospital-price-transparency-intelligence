@@ -9,15 +9,23 @@ from pathlib import Path
 import yaml
 
 from hpt.constants import (
+    DEFAULT_CMS_KNEE_CSV_PATH,
+    DEFAULT_EXTRACT_STREAM_THRESHOLD_BYTES,
     DEFAULT_HTTP_MAX_RETRIES,
     DEFAULT_HTTP_TIMEOUT_SEC,
+    DEFAULT_PROCESSED_DIR,
     DEFAULT_RAW_DIR,
+    DEFAULT_SILVER_DIR,
     DEFAULT_USER_AGENT,
+    ENV_CMS_KNEE_CSV_PATH,
     ENV_CONFIG_PATH,
+    ENV_EXTRACT_STREAM_THRESHOLD_BYTES,
     ENV_HTTP_MAX_RETRIES,
     ENV_HTTP_TIMEOUT_SEC,
     ENV_HTTP_USER_AGENT,
+    ENV_PROCESSED_DIR,
     ENV_RAW_DIR,
+    ENV_SILVER_DIR,
 )
 from hpt.models import Hospital
 
@@ -40,6 +48,28 @@ def default_hospitals_config_path() -> Path:
 def raw_dir() -> Path:
     raw = os.environ.get(ENV_RAW_DIR, DEFAULT_RAW_DIR)
     return Path(raw).expanduser().resolve()
+
+
+def silver_dir() -> Path:
+    s = os.environ.get(ENV_SILVER_DIR, DEFAULT_SILVER_DIR)
+    return Path(s).expanduser().resolve()
+
+
+def processed_dir() -> Path:
+    p = os.environ.get(ENV_PROCESSED_DIR, DEFAULT_PROCESSED_DIR)
+    return Path(p).expanduser().resolve()
+
+
+def cms_knee_replacement_csv_path() -> Path:
+    p = os.environ.get(ENV_CMS_KNEE_CSV_PATH, DEFAULT_CMS_KNEE_CSV_PATH)
+    return Path(p).expanduser().resolve()
+
+
+def extract_stream_threshold_bytes() -> int:
+    raw = os.environ.get(ENV_EXTRACT_STREAM_THRESHOLD_BYTES)
+    if raw is None or raw == "":
+        return int(DEFAULT_EXTRACT_STREAM_THRESHOLD_BYTES)
+    return max(0, int(raw))
 
 
 def http_timeout_sec() -> float:
@@ -86,6 +116,7 @@ def load_hospitals(config_path: Path | None = None) -> list[Hospital]:
                     hospital_key=str(row["hospital_key"]),
                     hospital_name=str(row["hospital_name"]),
                     state=str(row["state"]),
+                    ccn=str(row.get("ccn")).strip() if row.get("ccn") not in (None, "") else None,
                     tier=int(row["tier"]),
                     website_root=str(row["website_root"]),
                     cms_hpt_index_url=row.get("cms_hpt_index_url"),

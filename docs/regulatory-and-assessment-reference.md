@@ -1,140 +1,213 @@
-# Regulatory & Assessment Reference Guide
+# Regulatory & Domain Reference Guide
 
-*Intellicent MedTech Analytics — Knee Replacement (HCPCS 27447) Pipeline*
+*Hospital Price Transparency Pipeline — Knee Replacement (HCPCS 27447)*
 
-This document connects the federal price transparency regulation (45 CFR Part 180) to the assessment deliverables, and maps the CMS Medicare data dictionary to the pipeline's analytical requirements. It serves as the reference for **why** the data exists, what it means, and how it connects.
+This document connects the federal price transparency regulation (45 CFR Part 180) to the pipeline's data model, maps the CMS Medicare data dictionary to analytical requirements, and serves as the reference for **why** the data exists, what it means, and how it connects.
+
+**Authoritative sources:**
+- [45 CFR Part 180](https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-E/part-180) — the federal regulation
+- [CMSgov/hospital-price-transparency](https://github.com/CMSgov/hospital-price-transparency) — official CMS MRF templates and data dictionaries
+- [CMS HPT Validator & Tools](https://cmsgov.github.io/hpt-tool/) — MRF file naming wizard, TXT file generator, validator v2.0
 
 ---
 
-## 1. How the Regulation Creates the Data We're Collecting
+## 1. The Regulation That Creates the Data
 
-Source: https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-E/part-180
+### The legal mandate
 
-### The Legal Mandate
+Since January 1, 2021, every US hospital must publish a machine-readable file (MRF) containing standard charges for all items and services (45 CFR §180.50). Companies like Turquoise Health have built businesses around collecting and normalizing this data at scale.
 
-Since January 1, 2021, every US hospital must publish a machine-readable file (MRF) containing standard charges for all items and services (45 CFR §180.50). The assessment's premise — "companies like Turquoise Health have built entire businesses around collecting and normalizing this data" — exists because of this regulation.
+### The five standard charges (§180.20)
 
-### The Five Standard Charges (§180.20) → Assessment Schema Design
+The regulation defines five types of "standard charges." These directly inform the pipeline's canonical schema:
 
-The regulation defines five types of "standard charges." These directly inform our canonical output schema and the `rate_type` field:
-
-| Regulatory Term (§180.20) | Definition | Schema Field: `rate_type` | Assessment Relevance |
+| Regulatory term (§180.20) | Definition | Pipeline schema mapping | Analytical role |
 |---|---|---|---|
-| **Gross Charge** | Chargemaster "sticker price" — amount on hospital's price list absent any discounts | `gross_charge` | Maps to CMS `Avg_Submtd_Cvrd_Chrg`. ~6.4x actual payment. Not useful for pricing analysis. |
-| **Payer-Specific Negotiated Charge** | Charge negotiated with a specific third-party payer for an item or service. Must be tagged with payer name and plan name. | `negotiated` | **The core deliverable.** These are the commercial rates the assessment asks us to collect. CMS Medicare data does NOT have these — they only exist in the transparency files. |
-| **Discounted Cash Price** | Charge for an individual who pays cash or cash equivalent | `cash` | Useful benchmark. Often between Medicare and commercial rates. |
-| **De-identified Minimum Negotiated Charge** | Lowest charge negotiated with any third-party payer (anonymized) | `de-identified_min` | Floor of the negotiation range across all payers. |
-| **De-identified Maximum Negotiated Charge** | Highest charge negotiated with any third-party payer (anonymized) | `de-identified_max` | Ceiling of the negotiation range. |
+| **Gross charge** | Chargemaster "sticker price" — amount on hospital's price list absent any discounts | `gross_charge` column | Maps to CMS `Avg_Submtd_Cvrd_Chrg`. ~6.4× actual payment. Not useful for pricing analysis on its own. |
+| **Payer-specific negotiated charge** | Charge negotiated with a specific third-party payer for an item or service. Must be tagged with payer name and plan name. | `negotiated_amount` column (with `rate_type = "negotiated"`) | **Core analytical target.** These commercial rates exist only in the transparency files — CMS Medicare data does not have them. |
+| **Discounted cash price** | Charge for an individual who pays cash or cash equivalent | `discounted_cash` column | Useful benchmark. Often between Medicare and commercial rates. |
+| **De-identified minimum** | Lowest charge negotiated with any third-party payer (anonymized) | `deidentified_min` column | Floor of the negotiation range across all payers. |
+| **De-identified maximum** | Highest charge negotiated with any third-party payer (anonymized) | `deidentified_max` column | Ceiling of the negotiation range. |
 
-### Required MRF Data Elements (§180.50(b)(2)) → What We Parse
+> **Pipeline note:** The five charge types are stored as **separate columns**, not as different values of a single `rate_type` field. Each row has `rate_type = "negotiated"` with the other charges available in their own columns when published by the hospital.
 
-As of July 2024, hospitals using the CMS V2 template must encode these data elements. This is the schema we should expect when parsing transparency files:
+---
 
-**Hospital-level header fields:**
-- `hospital_name`, `hospital_address`, `hospital_location` — for entity resolution
-- `license_number|STATE` — state license or sometimes CCN
-- `version` — CMS template version (e.g., "2.0.0")
-- `last_updated_on` — data freshness indicator
-- Attestation statement (true/false)
+### CMS MRF template versions
 
-**Per item/service → maps to our pipeline's filtering and extraction:**
-- `description` — plain-language service description → used in keyword matching ("knee arthroplasty", "total knee", "TKA")
-- `code|1`, `code|1|type` — billing codes and types (CPT, HCPCS, DRG, NDC, RCC) → used to match HCPCS 27447
-- `setting` — "inpatient" or "outpatient" → important for distinguishing facility-level vs. professional charges
-- `modifiers` (as of Jan 2025) — may change the standard charge for a given service
-- `drug_unit_of_measurement`, `drug_type_of_measurement` (as of Jan 2025) — for pharmaceutical items, not relevant to knee replacement procedures
+The CMS has published machine-readable file templates that hospitals must conform to. Three compliance milestones define which data elements are required:
 
-**Per standard charge → maps to our canonical schema rate fields:**
-- `standard_charge|gross` → `rate_type: "gross_charge"`
-- `standard_charge|discounted_cash` → `rate_type: "cash"`
-- `standard_charge|{payer}|{plan}|negotiated_dollar` → `rate_type: "negotiated"`, `payer_name`, `payer_plan`
-- `standard_charge|{payer}|{plan}|negotiated_percentage` → percentage-based rate, requires `estimated_amount` conversion
-- `standard_charge|{payer}|{plan}|negotiated_algorithm` → algorithm-based rate
-- `standard_charge|min` → `rate_type: "de-identified_min"`
-- `standard_charge|max` → `rate_type: "de-identified_max"`
-- `standard_charge|methodology` — how the charge was established: `case rate`, `fee schedule`, `per diem`, or `percent of total billed charges`
+| Milestone | Effective date | Enforcement date | Key additions |
+|---|---|---|---|
+| **v2.0 initial** | July 1, 2024 | July 1, 2024 | Core data elements: hospital info, gross/cash/negotiated charges, payer names, billing codes, methodology, de-identified min/max |
+| **v2.0 full** | January 1, 2025 | January 1, 2025 | + `estimated_allowed_amount`, drug measurements (`drug_unit_of_measurement`, `drug_type_of_measurement`), `modifiers` |
+| **v3.0** | January 1, 2026 | **April 1, 2026** | + `attester_name`, `type_2_npi`, `attestation` (replaces affirmation), `median_amount`, `10th_percentile`, `90th_percentile`, `count`. `hospital_location` renamed to `location_name`. `estimated_allowed_amount` removed. New code types: `CMG`, `MS-LTC-DRG`. |
 
-**Charge methodology matters for knee replacement:**
-- `case rate` — flat rate per episode (most comparable to DRG-level CMS data)
-- `fee schedule` — based on a Medicare/Medicaid/commercial schedule
-- `per diem` — daily rate × length of stay (harder to compare without knowing LOS)
-- `percent of total billed charges` — percentage of gross charge (requires estimated_amount to be useful)
+The 15 hospitals in this pipeline publish a mix of v2 and v3 templates (see [pipeline-findings.md](pipeline-findings.md) §2).
 
-### File Naming Convention (§180.50(d)(5))
+---
+
+### Required MRF data elements
+
+The following tables reflect the **v3.0 specification** (the latest), with notes on which elements were added in each version.
+
+#### Hospital-level header fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `hospital_name` | String | Yes | Legal business name |
+| `last_updated_on` | Date | Yes | ISO 8601 (YYYY-MM-DD) |
+| `version` | String | Yes | CMS template version (e.g., `"3.0.0"`) |
+| `location_name` | String | Yes | Unique hospital location names (renamed from `hospital_location` in v3) |
+| `hospital_address` | String | Yes | Physical addresses; multiple locations separated by `\|` |
+| `license_number\|[state]` | String | Yes | State license number with 2-letter state code |
+| `attester_name` | String | Yes | CEO or designated senior official (**new in v3**) |
+| `attestation` | Boolean | Yes | Must be `true` for compliance (**new in v3**, replaces affirmation) |
+| `type_2_npi` | String | Yes | Organizational NPI with taxonomy codes 27 or 28 (**new in v3**) |
+| `financial_aid_policy` | String | Optional | Charity care / bill forgiveness policy |
+| `general_contract_provisions` | String | Optional | Aggregate-level payer contract terms |
+
+#### Per-item/service fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `description` | String | Yes | Plain-language service description — used in keyword matching ("knee arthroplasty", "TKA") |
+| `code\|[i]` | String | Yes | Billing codes; `[i]` is sequential (1, 2, 3...) for multiple codes per item |
+| `code\|[i]\|type` | Enum | Yes | Code type. Valid values: `CPT`, `HCPCS`, `NDC`, `RC`, `ICD`, `DRG`, `MS-DRG`, `R-DRG`, `S-DRG`, `APS-DRG`, `AP-DRG`, `APR-DRG`, `APC`, `LOCAL`, `EAPG`, `HIPPS`, `CDT`, `CDM`, `TRIS-DRG`, `CMG` (v3), `MS-LTC-DRG` (v3) |
+| `setting` | Enum | Yes | `"inpatient"`, `"outpatient"`, or `"both"` |
+| `billing_class` | Enum | Optional | `"professional"`, `"facility"`, or `"both"` |
+| `modifiers` | String | Yes | CPT/HCPCS modifiers (added Jan 2025) |
+| `drug_unit_of_measurement` | Numeric | Conditional | Required if code type is NDC (added Jan 2025) |
+| `drug_type_of_measurement` | Enum | Conditional | Valid: `GR`, `ME`, `ML`, `UN`, `F2`, `EA`, `GM` (added Jan 2025) |
+
+#### Charge fields
+
+| Field | Type | Required | Pipeline mapping |
+|---|---|---|---|
+| `standard_charge\|gross` | Numeric | Yes (if applicable) | `gross_charge` column |
+| `standard_charge\|discounted_cash` | Numeric | Yes (if applicable) | `discounted_cash` column |
+| `standard_charge\|negotiated_dollar` | Numeric | Conditional | `negotiated_amount` column |
+| `standard_charge\|negotiated_percentage` | Numeric | Conditional | Flagged `algorithm_only_rate` if no dollar amount |
+| `standard_charge\|negotiated_algorithm` | String | Conditional | Preserved in `rate_raw`; flagged `algorithm_only_rate` |
+| `standard_charge\|methodology` | Enum | Conditional | `charge_methodology` column |
+| `median_amount` | Numeric | Conditional | **New in v3** — required if percentage/algorithm used |
+| `10th_percentile` | Numeric | Conditional | **New in v3** — required if percentage/algorithm used |
+| `90th_percentile` | Numeric | Conditional | **New in v3** — required if percentage/algorithm used |
+| `count` | String | Conditional | **New in v3** — remittance count; required if percentage/algorithm used |
+| `standard_charge\|min` | Numeric | Conditional | `deidentified_min` column; required if negotiated_dollar encoded |
+| `standard_charge\|max` | Numeric | Conditional | `deidentified_max` column; required if negotiated_dollar encoded |
+| `additional_generic_notes` | String | Yes | Free text; required if methodology = "other" |
+
+#### Charge methodology values
+
+The `methodology` field determines whether a negotiated rate is comparable to a bundled Medicare DRG payment:
+
+| Methodology | Meaning | Comparable to Medicare DRG? |
+|---|---|---|
+| `case rate` | Flat rate per episode | **Yes** — most directly comparable |
+| `fee schedule` | Per-service rate from a schedule | **No** — component rate, not full episode |
+| `per diem` | Daily rate × length of stay | **No** — requires LOS multiplication |
+| `percent of total billed charges` | Percentage of gross charge | **No** — requires conversion via gross charge |
+| `other` | Unclassified; requires explanation in notes | **No** — cannot be compared without context |
+
+#### Conditional requirement rules (key ones for parsing)
+
+1. At least one charge type (gross, cash, or negotiated) must be present per item
+2. If negotiated_dollar is encoded, `min` and `max` must also be present
+3. If percentage or algorithm is used, `count` is required
+4. If `count` > 0, then `median_amount`, `10th_percentile`, `90th_percentile` are required
+5. If `count` = 0, an explanation in notes is required
+6. `methodology` is required whenever a payer-specific charge is present
+7. Code and code_type must always pair together
+
+### File formats
+
+Hospitals must publish in one of three CMS template formats:
+
+| Format | Structure | Pipeline parser |
+|---|---|---|
+| **CSV tall** | One row per item × payer × plan. Payer name and plan in separate columns. | `csv_tall_variant` |
+| **CSV wide** | One row per item. Payer/plan embedded in column headers: `standard_charge\|[payer]\|[plan]\|negotiated_dollar` | `csv_wide_standardcharges` |
+| **JSON** | Nested arrays: `standard_charge_information[].standard_charges[].payers_information[]` | `json_nested_standard_charge_information` |
+
+### File naming convention (§180.50(d)(5))
 
 `<ein>_<hospital-name>_standardcharges.[json|csv]`
 
-This is why we can extract EINs directly from transparency file URLs — it's federally mandated, not optional.
+This is federally mandated, which is why EINs can be extracted directly from MRF URLs (e.g., `133971298` in NYU Langone's filename → EIN `133971298`).
 
-### cms-hpt.txt Requirement (§180.50(d)(6))
+### cms-hpt.txt requirement (§180.50(d)(6))
 
 Since January 2024, every hospital must host a `cms-hpt.txt` file at their website root containing:
+
 - Location name
 - Source page URL
 - MRF direct download URL
 - Hospital point of contact (name and email)
 
-This is the **scalable discovery mechanism** for expanding from 15 to 5,000 hospitals. A crawler hitting `<hospital-domain>/cms-hpt.txt` can automatically extract all MRF URLs without manual navigation.
+This is the **scalable discovery mechanism** — a crawler hitting `<hospital-domain>/cms-hpt.txt` can automatically resolve MRF URLs without navigating the hospital's website. In this pipeline, 14 of 15 hospitals (93%) had a working `cms-hpt.txt`, above the national average of ~61% (Turquoise Health, 2024).
 
-### Penalties for Noncompliance (§180.90)
+### Penalties for noncompliance (§180.90)
 
-| Hospital Size | Max Daily Penalty |
+Updated by the CY2022 OPPS Final Rule (effective January 1, 2022):
+
+| Hospital size | Daily penalty |
 |---|---|
-| ≤30 beds | $300/day |
-| 31–550 beds | beds × $10/day |
-| >550 beds | $5,500/day |
+| ≤30 beds | $300/day (minimum floor) |
+| 31+ beds | **$10 × number of beds per day (no cap)** |
 
-Max annual penalty for a large hospital: ~$2M. Some hospitals have calculated that noncompliance fines are cheaper than revealing their negotiated rates — which explains why data quality and completeness varies.
+**Examples:** A 550-bed hospital faces $5,500/day (~$2M/year). A 1,000-bed hospital faces $10,000/day (~$3.65M/year). There is **no maximum cap** — larger hospitals face proportionally higher penalties.
+
+> Some hospitals have calculated that noncompliance fines are still cheaper than revealing their negotiated rates, which explains why data quality and completeness varies in practice.
 
 ---
 
-## 2. CMS Medicare Data Dictionary → Assessment Requirements
+## 2. CMS Medicare Data Dictionary
 
-Source: `Medicare_Inpatient_Hospitals_-_by_Provider_and_Service_Data_Dictionary.pdf`
+**Source:** `data/cms_knee_replacement_by_provider.csv` (1,377 rows: DRG 469 = 66, DRG 470 = 1,311)
 
-The CMS data (`cms_knee_replacement_by_provider.csv`) is the "known" dataset we join transparency data against. Here's how each field connects to the assessment:
+This is the "known" dataset the pipeline joins transparency data against. Each field's role:
 
-| CMS Column | Definition | Assessment Use |
+| CMS column | Definition | Pipeline use |
 |---|---|---|
-| `Rndrng_Prvdr_CCN` | CMS Certification Number — unique 6-digit Medicare provider ID | **Primary join key** for entity resolution. Links CMS records to transparency file hospitals. First 2 digits = state code. |
-| `Rndrng_Prvdr_Org_Name` | Provider name as registered with CMS | **Entity resolution fallback.** Names are truncated at ~50 chars and inconsistently cased. Used with fuzzy matching when CCN is unavailable. |
+| `Rndrng_Prvdr_CCN` | CMS Certification Number — unique 6-digit Medicare provider ID | **Primary join key.** Links CMS records to transparency-file hospitals. First 2 digits = state code. |
+| `Rndrng_Prvdr_Org_Name` | Provider name as registered with CMS | Disambiguation. Names are truncated at ~50 chars and inconsistently cased. Not used for fuzzy matching in this pipeline (CCN-first join only). |
 | `Rndrng_Prvdr_City` | City where provider is physically located | Disambiguation when multiple hospitals share a name (e.g., 5 Piedmont hospitals in GA). |
 | `Rndrng_Prvdr_State_Abrvtn` | Two-letter state abbreviation | Geographic analysis: high-cost (NY, CA, NJ) vs. low-cost (MS, IN, OK) markets. |
 | `Rndrng_Prvdr_Zip5` | 5-digit ZIP code | Fine-grained disambiguation and geographic clustering. |
-| `DRG_Cd` | Diagnosis Related Group code (469 or 470) | 469 = with Major Complication/Comorbidity (complex), 470 = without MCC (routine). **DRG 469/470 covers BOTH hip and knee** — transparency files (HCPCS 27447) provide knee-specific granularity that CMS data lacks. |
-| `DRG_Desc` | DRG description | Truncated. "MAJOR HIP AND KNEE JOINT REPLACEMENT OR REATTACHMENT OF LOWER EXTREMITY..." |
+| `DRG_Cd` | Diagnosis Related Group code (469 or 470) | 469 = with MCC (complex), 470 = without MCC (routine). **DRG 469/470 covers both hip and knee** — transparency files (HCPCS 27447) provide knee-specific granularity. |
+| `DRG_Desc` | DRG description | Truncated: "MAJOR HIP AND KNEE JOINT REPLACEMENT OR REATTACHMENT OF LOWER EXTREMITY..." |
 | `Tot_Dschrgs` | Number of discharges billed | **Volume indicator.** Drives tier classification — higher volume = more analytical value. |
-| `Avg_Submtd_Cvrd_Chrg` | Average covered charges submitted to Medicare | The "sticker price" — maps to regulatory `Gross Charge`. ~6.4x actual payment. Not what anyone pays. |
-| `Avg_Tot_Pymt_Amt` | Average total payments including patient cost-sharing | Total payments including Medicare + patient copay/deductible + third-party coordination of benefits. |
-| `Avg_Mdcr_Pymt_Amt` | Average Medicare payment — Medicare's actual share | **The benchmark for commercial rate comparison.** Does NOT include patient copay/deductible. This is the denominator in the commercial-to-Medicare ratio. |
+| `Avg_Submtd_Cvrd_Chrg` | Average covered charges submitted to Medicare | The "sticker price" — maps to regulatory Gross Charge. ~6.4× actual payment. |
+| `Avg_Tot_Pymt_Amt` | Average total payments including patient cost-sharing | Total: Medicare + patient copay/deductible + third-party coordination of benefits. |
+| `Avg_Mdcr_Pymt_Amt` | Average Medicare payment — Medicare's actual share | **The benchmark for ratio analysis.** Does NOT include patient copay/deductible. This is the denominator in `commercial_to_medicare_ratio`. |
 
-### The Key Gap the Assessment Tests
+### The key data gap this pipeline bridges
 
-| What CMS Data Has | What It's Missing (only in transparency files) |
+| What CMS data has | What's only in transparency files |
 |---|---|
-| Medicare payment rates | Commercial payer-specific negotiated rates |
-| Hospital volume (discharges) | Payer-level detail (Aetna, UHC, BCBS, etc.) |
+| Medicare payment rates (one number per hospital) | Commercial payer-specific negotiated rates (per payer × plan) |
+| Hospital volume (aggregate discharges) | Payer-level detail (Aetna, UHC, BCBS, etc.) |
 | Hospital identifiers (CCN, name, state) | Implant manufacturer and product names |
 | DRG-level grouping (hip + knee combined) | HCPCS-level granularity (knee-specific via 27447) |
-| Aggregate national data (~1,400 hospitals) | Implant billing codes and costs |
+| ~1,400 hospitals with knee data | Implant billing codes and costs |
 
-This gap is the entire value proposition. The assessment tests whether you can bridge it.
+Bridging this gap — joining commercial negotiated rates from MRFs to Medicare benchmarks from CMS — is the core value of the pipeline.
 
 ---
 
-## 3. Regulatory Definitions → Assessment Deliverable Mapping
+## 3. Regulation → Pipeline Deliverable Mapping
 
-| Assessment Deliverable | Regulatory Source | What It Tests |
+| Pipeline capability | Regulatory source | What it demonstrates |
 |---|---|---|
-| **Find the hospital's MRF** | §180.50(d) — hospitals must post MRFs on publicly available websites with direct download links, cms-hpt.txt index, and "Price Transparency" footer link | Data acquisition: Can you navigate the real-world messiness of how hospitals comply (or don't)? |
-| **Download and parse it** | §180.50(c) — MRFs must conform to CMS template (CSV tall, CSV wide, or JSON) | Schema detection: Can you handle three template layouts plus pre-V2 non-standard formats? |
-| **Extract HCPCS 27447 records** | §180.50(b)(2)(iv) — hospitals must include billing codes (CPT, HCPCS, DRG) | Code matching: HCPCS 27447 exact match, DRG 469/470 fallback, description keyword search |
-| **Pull out payer names and negotiated rates** | §180.20 — "payer-specific negotiated charge" must be tagged with payer name and plan | Parsing payer-specific columns in wide format vs. rows in tall format vs. nested objects in JSON |
-| **Pull out implant detail** | §180.20 — "items and services" includes supplies and procedures; some hospitals publish device-level charges | Most hospitals won't have this. Schema must handle nulls gracefully. |
-| **Normalize into a common schema** | §180.50(b)(2) — CMS V2 template defines standard data elements | Schema design: your canonical schema should align with the regulatory data elements |
-| **Match to CMS records** | Entity resolution across CCN, EIN, NPI, names | The regulation uses EIN in file naming; CMS data uses CCN. Bridging these is the entity resolution challenge. |
-| **Scale from 15 to 5,000** | §180.50(d)(6) — cms-hpt.txt enables automated discovery | The regulatory framework itself provides the scaling mechanism |
-| **Analyze Medicare vs. commercial patterns** | Gross Charge vs. Payer-Specific Negotiated Charge vs. Discounted Cash Price — all defined in §180.20 | Understanding what each charge type means is essential for valid comparisons |
+| **MRF discovery** | §180.50(d) — hospitals must post MRFs with direct download links + `cms-hpt.txt` index | Navigating real-world compliance variability (14/15 had `cms-hpt.txt`; 1 required manual URL discovery) |
+| **Download and parse** | §180.50(c) — MRFs must conform to CMS template (CSV tall, CSV wide, or JSON) | Schema detection across 3 template layouts + v2/v3 version differences |
+| **Procedure extraction** | §180.50(b)(2)(iv) — hospitals must include billing codes (CPT, HCPCS, DRG) | HCPCS 27447 exact match, DRG 469/470 fallback, description keyword search |
+| **Payer rate extraction** | §180.20 — payer-specific negotiated charge must be tagged with payer name and plan | Parsing wide-format columns, tall-format rows, and JSON nested objects |
+| **Schema normalization** | §180.50(b)(2) — CMS template defines standard data elements | 54-column canonical schema aligned with regulatory data elements |
+| **CMS join** | Entity resolution across CCN, EIN, NPI | Bridging MRF identifiers (EIN in filename) to CMS identifiers (CCN in provider data) |
+| **Scale potential** | §180.50(d)(6) — `cms-hpt.txt` enables automated discovery | The regulation itself provides the scaling mechanism for 5,000+ hospitals |
+| **Rate analysis** | §180.20 defines all five charge types + methodology | Understanding what each charge type means is essential for valid commercial-to-Medicare comparisons |
 
 ---
 
@@ -142,16 +215,16 @@ This gap is the entire value proposition. The assessment tests whether you can b
 
 Four key identifiers used across datasets:
 
-| Identifier | Full Name | Assigned By | Format | Where It Appears |
+| Identifier | Full name | Assigned by | Format | Where it appears |
 |---|---|---|---|---|
 | **CCN** | CMS Certification Number | CMS | 6-digit (first 2 = state) | CMS Medicare data (`Rndrng_Prvdr_CCN`), Medicare.gov, Provider of Services file |
-| **EIN** | Employer Identification Number | IRS | 9-digit | Transparency file URLs (mandated naming convention), IRS Form 990, HCRIS cost reports |
-| **Type 2 NPI** | Organizational National Provider Identifier | CMS/NPPES | 10-digit | NPPES registry, claims data, NPI-to-CCN crosswalks |
+| **EIN** | Employer Identification Number | IRS | 9-digit | MRF URLs (mandated naming convention), IRS Form 990, HCRIS cost reports |
+| **Type 2 NPI** | Organizational National Provider Identifier | CMS/NPPES | 10-digit | NPPES registry, claims data, NPI-to-CCN crosswalks, **MRF headers (required in v3)** |
 | **State License #** | State facility license | State health dept | Varies by state | Inside MRF header rows (`license_number\|STATE`) |
 
-### Crosswalk Sources for Scaling
+### Crosswalk sources for scaling
 
-| Source | Contains | Best For |
+| Source | Contains | Best for |
 |---|---|---|
 | CMS HCRIS (Cost Reports) | Both CCN and EIN | Most reliable programmatic crosswalk |
 | NBER NPI-to-CCN Crosswalk | NPI ↔ CCN | Bridging NPPES to Medicare data (last updated Dec 2017) |
@@ -161,31 +234,34 @@ Four key identifiers used across datasets:
 | Medicare.gov Care Compare | CCN by hospital name | Manual verification |
 | CMS Hospital General Info | CCN + name + address + ownership | Bulk download from data.cms.gov |
 
-### For This Pipeline
+### In this pipeline
 
-- **CCN** comes from `cms_knee_replacement_by_provider.csv` (`Rndrng_Prvdr_CCN`)
-- **EIN** is extracted from transparency file URLs (CMS naming convention: `<ein>_<hospital-name>_standardcharges`)
-- **Mapping approach:** Hardcoded lookup table for 15 hospitals; at scale, use HCRIS cost report data for CCN↔EIN crosswalk, and cms-hpt.txt for automated MRF URL discovery
+- **CCN** is curated in `config/hospitals.yaml` and used as the primary join key against `Rndrng_Prvdr_CCN`
+- **EIN** is extracted from MRF URLs (CMS naming convention: `<ein>_<hospital-name>_standardcharges`)
+- **Approach:** Deterministic CCN-first join for 15 hospitals; at scale, automate via HCRIS CCN↔EIN crosswalk + CMS NPPES for NPI→CCN resolution
 
 ---
 
 ## 5. Analytical Framework
 
-### Commercial-to-Medicare Ratio
-The assessment explicitly asks about "patterns or relationships between Medicare payment data and commercial negotiated rates."
+### Commercial-to-Medicare ratio
 
-- Industry benchmark: commercial rates typically 1.5x–3x Medicare for orthopedics (source: RAND Hospital Price Transparency studies)
-- Formula: `commercial_to_medicare_ratio = negotiated_rate / cms_avg_medicare_pymt`
-- The CMS field `Avg_Mdcr_Pymt_Amt` is the denominator — it's Medicare's actual payment, NOT including patient cost-sharing
+The central analytical question: what is the relationship between Medicare payment rates and commercial negotiated rates?
 
-### Key Analyses for the README
+- **Industry benchmark:** Commercial rates typically 1.5×–3× Medicare for orthopedics (RAND Hospital Price Transparency studies)
+- **Pipeline formula:** `commercial_to_medicare_ratio = negotiated_amount / cms_avg_mdcr_pymt_amt`
+- **Denominator:** `Avg_Mdcr_Pymt_Amt` is Medicare's actual payment — does **not** include patient copay/deductible
+- **Pipeline result:** Median 1.71× across 1,338 comparable rows (see [pipeline-findings.md](pipeline-findings.md) §6)
 
-1. **Commercial-to-Medicare ratio** by hospital and payer — do ratios cluster or vary widely?
-2. **Geographic variation** — do high-cost markets (NY, CA, NJ) show higher ratios than low-cost (MS, IN, OK)?
-3. **Volume correlation** — do high-volume hospitals (NEBH: 1,033 discharges) negotiate different rates than low-volume (Warren: 11)?
-4. **System vs. independent** — do large systems (Ascension, BSW, HCA) show different pricing than independent hospitals?
-5. **Estimation potential** — if the commercial-to-Medicare multiplier is reliable by region/system type, you could estimate commercial rates for the ~1,400 CMS hospitals without transparency data. This is the core business model of companies like Turquoise Health.
+### Key analytical dimensions
 
-### What the Assessment is Really Testing
+1. **Commercial-to-Medicare ratio by hospital and payer** — ratios vary widely (0.2× for Medicaid to 4.7× for some BCBS plans)
+2. **Charge methodology filter** — case-rate rows (1.77× median) are the most reliable comparison; fee-schedule and per-diem rows are not comparable to DRG bundles
+3. **Geographic variation** — high-cost markets (NY, CA, NJ) vs. low-cost (MS, IN, OK)
+4. **Volume correlation** — high-volume hospitals (NEBH: 1,033 discharges) vs. low-volume (Warren: 11)
+5. **System vs. independent** — large systems (Ascension, BSW, HCA) vs. independent hospitals
+6. **Estimation potential** — if the commercial-to-Medicare multiplier is reliable by region/system type, it becomes predictive for the ~1,400 CMS hospitals without transparency data
 
-The README prompt "whether those relationships could be used to estimate pricing where transparency data isn't available" is asking you to demonstrate you understand the **business value** of this work. If you can show that a $14,000 Medicare payment in MA consistently maps to ~$42,000 commercial rates (3x), that relationship becomes predictive — and that's what makes this data commercially valuable for MedTech pricing intelligence.
+### Why charge methodology matters more than most people realize
+
+The biggest pitfall in hospital price transparency analysis is comparing non-comparable rate types. A `per diem` rate of $5,000/day looks cheaper than a `case rate` of $30,000, but a 7-day knee replacement stay at $5,000/day is actually $35,000. The `charge_methodology` field — mandated by the regulation — is the key to valid comparisons. The pipeline flags non-comparable rows via `dq_flags` (`percent_of_charges_noncomparable`, `algorithm_only_rate`) rather than producing misleading ratios.

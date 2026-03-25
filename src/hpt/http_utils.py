@@ -39,6 +39,8 @@ class StreamDownloadResult:
     status_code: int
     bytes_written: int
     content_type: str | None
+    etag: str | None
+    last_modified: str | None
     error: str | None
     skipped: bool = False
 
@@ -190,6 +192,8 @@ def download_to_path(
     for attempt in range(max_retries + 1):
         headers = {"User-Agent": user_agent}
         content_type: str | None = None
+        etag: str | None = None
+        last_modified: str | None = None
         total = 0
         status_code = 0
         tmp: Path | None = None
@@ -202,6 +206,8 @@ def download_to_path(
                 with client.stream("GET", url) as response:
                     status_code = response.status_code
                     content_type = response.headers.get("content-type")
+                    etag = response.headers.get("etag")
+                    last_modified = response.headers.get("last-modified")
                     cd = response.headers.get("content-disposition")
                     if response.status_code >= 400:
                         last_err = f"HTTP {response.status_code} for {url}"
@@ -215,6 +221,8 @@ def download_to_path(
                             status_code,
                             0,
                             content_type,
+                            etag,
+                            last_modified,
                             last_err,
                         )
 
@@ -236,6 +244,8 @@ def download_to_path(
                             status_code,
                             0,
                             content_type,
+                            etag,
+                            last_modified,
                             None,
                             skipped=True,
                         )
@@ -255,6 +265,8 @@ def download_to_path(
                 status_code,
                 total,
                 content_type,
+                etag,
+                last_modified,
                 None,
             )
         except httpx.HTTPError as e:
@@ -270,6 +282,8 @@ def download_to_path(
                     0,
                     0,
                     content_type,
+                    etag,
+                    last_modified,
                     last_err,
                 )
             time.sleep(_backoff_seconds(attempt))
@@ -277,7 +291,6 @@ def download_to_path(
             guess = dest_dir / suggested_local_filename(url)
             if tmp and tmp.exists():
                 tmp.unlink(missing_ok=True)
-            return StreamDownloadResult(url, guess, 0, 0, None, f"OSError: {e}")
+            return StreamDownloadResult(url, guess, 0, 0, None, None, None, f"OSError: {e}")
     guess = dest_dir / suggested_local_filename(url)
-    return StreamDownloadResult(url, guess, 0, 0, None, last_err or "download failed")
-
+    return StreamDownloadResult(url, guess, 0, 0, None, None, None, last_err or "download failed")

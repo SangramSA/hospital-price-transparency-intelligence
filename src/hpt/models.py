@@ -25,6 +25,8 @@ class Hospital:
     hospital_key: str
     hospital_name: str
     state: str
+    # Curated CMS Certification Number (zero-padded 6-digit string) used for CMS joins.
+    ccn: str | None
     tier: int
     website_root: str
     cms_hpt_index_url: str | None

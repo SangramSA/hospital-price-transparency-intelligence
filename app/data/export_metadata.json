@@ -1,0 +1,9 @@
+{
+  "cms_snapshot_hash": "40c042a30c44f626005b0330f963f4147f9a2ad2da5f1dc800e8b980ca59c766",
+  "combined_csv": "combined.csv",
+  "generated_at": "2026-03-24T23:42:28Z",
+  "optional_combined_jsonl": null,
+  "output_schema_version": "1",
+  "pipeline_version": "0.1.0",
+  "row_count": 2981
+}
