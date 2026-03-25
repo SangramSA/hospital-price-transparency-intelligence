@@ -12,7 +12,12 @@ from pathlib import Path
 from typing import Any
 
 from hpt import __version__ as pipeline_version
-from hpt.config import default_hospitals_config_path, filter_hospitals, load_hospitals, processed_dir
+from hpt.config import (
+    default_hospitals_config_path,
+    filter_hospitals,
+    load_hospitals,
+    processed_dir,
+)
 from hpt.constants import (
     COMBINED_CSV_NAME,
     COMBINED_JSONL_NAME,

@@ -5,7 +5,12 @@ from hpt.pipeline import resolve_hospital_keys
 
 
 def test_resolve_hospital_keys_all_none() -> None:
-    assert resolve_hospital_keys(config_path=default_hospitals_config_path(), hospital_keys=None, tier=None) is None
+    assert (
+        resolve_hospital_keys(
+            config_path=default_hospitals_config_path(), hospital_keys=None, tier=None
+        )
+        is None
+    )
 
 
 def test_resolve_hospital_keys_tier_filters() -> None:

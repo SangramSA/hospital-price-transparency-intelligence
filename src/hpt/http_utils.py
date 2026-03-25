@@ -294,4 +294,3 @@ def download_to_path(
             return StreamDownloadResult(url, guess, 0, 0, None, None, None, f"OSError: {e}")
     guess = dest_dir / suggested_local_filename(url)
     return StreamDownloadResult(url, guess, 0, 0, None, None, None, last_err or "download failed")
-

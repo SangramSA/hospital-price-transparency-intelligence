@@ -80,7 +80,11 @@ def should_skip_extract(
     silver_path = silver_root / rel
     if not silver_path.is_file():
         return False
-    logger.info("[%s] extract: skip (checkpoint matches manifest sha256=%s…)", hospital_key, current_sha[:12])
+    logger.info(
+        "[%s] extract: skip (checkpoint matches manifest sha256=%s…)",
+        hospital_key,
+        current_sha[:12],
+    )
     return True
 
 

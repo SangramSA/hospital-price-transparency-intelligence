@@ -10,7 +10,7 @@ from hpt.extract import select_standard_charges_artifact
 def test_probe_csv_prefers_utf8_when_valid() -> None:
     with tempfile.TemporaryDirectory() as td:
         p = Path(td) / "x.csv"
-        p.write_bytes("a,b\n1,2\n".encode("utf-8"))
+        p.write_bytes(b"a,b\n1,2\n")
         assert probe_csv_text_encoding(p) in {"utf-8", "utf-8-sig"}
 
 

@@ -287,7 +287,9 @@ def iter_procedure_charge_lines_from_csv(path: Path) -> Iterator[ProcedureCharge
                                 meta_header = row
                                 values_row = next(reader, None)
                                 if values_row:
-                                    meta = _extract_patient_metadata_from_map(meta_header, values_row)
+                                    meta = _extract_patient_metadata_from_map(
+                                        meta_header, values_row
+                                    )
                                 continue
 
                         # Table header start (wide or tall-shaped)
@@ -396,7 +398,10 @@ def iter_procedure_charge_lines_from_csv(path: Path) -> Iterator[ProcedureCharge
                 elif len(parts_norm) >= 3 and parts_norm[0] == "additional_payer_notes":
                     payer_key = tuple(raw_parts[1:])
                     payer_additional_notes_idx[payer_key] = i
-                elif len(parts_norm) >= 2 and parts_norm[0] in {"10th_percentile", "90th_percentile"}:
+                elif len(parts_norm) >= 2 and parts_norm[0] in {
+                    "10th_percentile",
+                    "90th_percentile",
+                }:
                     payer_key = tuple(raw_parts[1:])
                     if parts_norm[0] == "10th_percentile":
                         payer_deid_min_idx[payer_key] = i
@@ -428,7 +433,9 @@ def iter_procedure_charge_lines_from_csv(path: Path) -> Iterator[ProcedureCharge
                 if not code:
                     continue
                 t_idx = code_type_idx_by_slot.get(slot)
-                code_type = _as_str_cell(row[t_idx]) if t_idx is not None and t_idx < len(row) else None
+                code_type = (
+                    _as_str_cell(row[t_idx]) if t_idx is not None and t_idx < len(row) else None
+                )
                 code_pairs.append((code, code_type))
             selected = select_procedure_from_code_columns(
                 code_pairs, description=procedure_description
@@ -500,12 +507,20 @@ def iter_procedure_charge_lines_from_csv(path: Path) -> Iterator[ProcedureCharge
                     rate_raw = None
                     payer_dq: list[str] = []
 
-                    if idx_tall_negotiated_dollar is not None and idx_tall_negotiated_dollar < len(row):
-                        negotiated_amount, bad_dollar = parse_float_with_dq(row[idx_tall_negotiated_dollar])
+                    if idx_tall_negotiated_dollar is not None and idx_tall_negotiated_dollar < len(
+                        row
+                    ):
+                        negotiated_amount, bad_dollar = parse_float_with_dq(
+                            row[idx_tall_negotiated_dollar]
+                        )
                         if bad_dollar:
                             payer_dq.append("unparseable_numeric")
-                    if idx_tall_estimated_amount is not None and idx_tall_estimated_amount < len(row):
-                        estimated_amount, bad_est = parse_float_with_dq(row[idx_tall_estimated_amount])
+                    if idx_tall_estimated_amount is not None and idx_tall_estimated_amount < len(
+                        row
+                    ):
+                        estimated_amount, bad_est = parse_float_with_dq(
+                            row[idx_tall_estimated_amount]
+                        )
                         if bad_est:
                             payer_dq.append("unparseable_numeric")
                     pct_raw = (
@@ -652,7 +667,9 @@ def iter_procedure_charge_lines_from_csv(path: Path) -> Iterator[ProcedureCharge
                     )
 
             if not payer_charges:
-                logger.debug("[%s] skipping matched procedure without payer negotiated rows", path.name)
+                logger.debug(
+                    "[%s] skipping matched procedure without payer negotiated rows", path.name
+                )
                 continue
 
             yield ProcedureChargeLine(
@@ -669,4 +686,3 @@ def iter_procedure_charge_lines_from_csv(path: Path) -> Iterator[ProcedureCharge
                 implant=implant,
                 line_dq_flags=tuple(dict.fromkeys(line_dq)),
             )
-

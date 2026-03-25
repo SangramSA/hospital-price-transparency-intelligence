@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# Order: try strict UTF-8 first, then common US hospital exports, then Latin-1 (never fails per-byte).
+# Order: try strict UTF-8 first, then common US hospital exports,
+# then Latin-1 (never fails per-byte).
 CSV_TEXT_ENCODING_ORDER: tuple[str, ...] = (
     "utf-8-sig",
     "utf-8",

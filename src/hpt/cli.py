@@ -17,7 +17,10 @@ from hpt.pipeline import resolve_hospital_keys, run_all, run_extract_hospitals
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="hpt",
-        description="Hospital price transparency pipeline (discover, download, extract, join, export, run-all).",
+        description=(
+            "Hospital price transparency pipeline"
+            " (discover, download, extract, join, export, run-all)."
+        ),
     )
     parser.add_argument(
         "--version",
@@ -148,7 +151,11 @@ def _build_parser() -> argparse.ArgumentParser:
         "--cms-path",
         type=Path,
         default=None,
-        help="Path to CMS knee replacement CSV (default: data/cms_knee_replacement_by_provider.csv or HPT_CMS_KNEE_CSV_PATH)",
+        help=(
+            "Path to CMS knee replacement CSV"
+            " (default: data/cms_knee_replacement_by_provider.csv"
+            " or HPT_CMS_KNEE_CSV_PATH)"
+        ),
     )
     p_join.add_argument(
         "--silver-dir",
@@ -192,7 +199,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--joined-root",
         type=Path,
         default=None,
-        help="Directory containing joined/{hospital_key}/*.joined.jsonl (default: {processed}/joined)",
+        help=(
+            "Directory containing joined/{hospital_key}/"
+            "*.joined.jsonl (default: {processed}/joined)"
+        ),
     )
     p_export.add_argument(
         "--output-dir",

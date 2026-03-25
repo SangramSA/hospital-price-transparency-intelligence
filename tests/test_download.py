@@ -33,7 +33,9 @@ def _write_manifest(root: Path, payload: dict[str, object]) -> Path:
     return manifest_path
 
 
-def test_download_idempotent_rerun_uses_active_manifest_artifact(monkeypatch, tmp_path: Path) -> None:
+def test_download_idempotent_rerun_uses_active_manifest_artifact(
+    monkeypatch, tmp_path: Path
+) -> None:
     raw_root = tmp_path / "raw"
     artifact = raw_root / "test-hospital" / "artifacts" / "abc123_file.csv"
     artifact.parent.mkdir(parents=True, exist_ok=True)

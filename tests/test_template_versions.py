@@ -10,7 +10,8 @@ from hpt.template_versions import detect_template_for_file
 def test_detect_csv_v2_header() -> None:
     body = (
         "hospital_name,last_updated_on,version,hospital_location,hospital_address,license_number|CA,"
-        "\"To the best of its knowledge and belief, the hospital has included all applicable standard charge information\"\n"
+        '"To the best of its knowledge and belief, the hospital has'
+        ' included all applicable standard charge information"\n'
         "Example,2025-01-01,2.0.0,Loc,Addr,123,TRUE\n"
         "description,code|1,code|1|type,payer_name,plan_name,standard_charge|negotiated_dollar,standard_charge|gross\n"
         "TOTAL KNEE ARTHROPLASTY,27447,CPT,ACME,Gold,500,1000\n"

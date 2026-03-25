@@ -153,10 +153,16 @@ def _build_provider_aggregate(ccn: str, rows: list[dict[str, str]]) -> _CmsProvi
         drg_cd=drg_cd,
         tot_dschrgs=sum(discharges) if any(discharges) else None,
         avg_mdcr_pymt_amt=_weighted_or_mean(
-            [(bench.avg_mdcr_pymt_amt, discharge) for bench, discharge in zip(benchmarks, discharges)]
+            [
+                (bench.avg_mdcr_pymt_amt, discharge)
+                for bench, discharge in zip(benchmarks, discharges)
+            ]
         ),
         avg_submtd_cvrd_chrg=_weighted_or_mean(
-            [(bench.avg_submtd_cvrd_chrg, discharge) for bench, discharge in zip(benchmarks, discharges)]
+            [
+                (bench.avg_submtd_cvrd_chrg, discharge)
+                for bench, discharge in zip(benchmarks, discharges)
+            ]
         ),
     )
     return _CmsProviderAggregate(by_drg=by_drg, combined=combined)
@@ -178,10 +184,7 @@ def load_cms_benchmarks_by_ccn(cms_csv_path: Path) -> tuple[dict[str, _CmsProvid
                 continue
             out.setdefault(ccn, []).append(raw)
 
-    benchmarks = {
-        ccn: _build_provider_aggregate(ccn, rows)
-        for ccn, rows in out.items()
-    }
+    benchmarks = {ccn: _build_provider_aggregate(ccn, rows) for ccn, rows in out.items()}
     return benchmarks, _sha256_file(cms_csv_path)
 
 
@@ -200,9 +203,7 @@ def _methodology_noncomparable(methodology: str | None) -> bool:
     return "percent" in lowered or "% of" in lowered
 
 
-def _select_benchmark_for_row(
-    row: dict[str, Any], provider: _CmsProviderAggregate
-) -> CmsBenchmark:
+def _select_benchmark_for_row(row: dict[str, Any], provider: _CmsProviderAggregate) -> CmsBenchmark:
     code = str(row.get("procedure_code") or "").strip()
     if code in _CMS_DRG_SCOPE and code in provider.by_drg:
         return provider.by_drg[code]
@@ -211,9 +212,7 @@ def _select_benchmark_for_row(
     return provider.combined
 
 
-def _ratio_noncomparability_reasons(
-    *, row: dict[str, Any], benchmark: CmsBenchmark
-) -> set[str]:
+def _ratio_noncomparability_reasons(*, row: dict[str, Any], benchmark: CmsBenchmark) -> set[str]:
     reasons: set[str] = set()
     if _row_has_dq_flag(row, "percent_of_charges_noncomparable") or _methodology_noncomparable(
         row.get("charge_methodology")
@@ -384,4 +383,3 @@ def run_join(
             joined_results.append(file_result)
         results.append((hospital.hospital_key, joined_results))
     return results
-

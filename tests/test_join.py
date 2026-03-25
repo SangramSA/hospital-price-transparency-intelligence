@@ -21,7 +21,8 @@ def _write_cms_csv(path: Path) -> None:
             "Rndrng_Prvdr_Zip5,DRG_Cd,DRG_Desc,Tot_Dschrgs,Avg_Submtd_Cvrd_Chrg,Avg_Tot_Pymt_Amt,Avg_Mdcr_Pymt_Amt\n"
             "220088,New England Baptist Hospital,Boston,MA,02120,469,desc,10,30000,0,10000\n"
             "220088,New England Baptist Hospital,Boston,MA,02120,470,desc,30,50000,0,20000\n"
-            "310064,Atlanticare Regional Medical Center - City Campus,Atlantic City,NJ,08401,469,desc,11,131603.3636,0,24778.81818\n"
+            "310064,Atlanticare Regional Medical Center - City Campus,"
+            "Atlantic City,NJ,08401,469,desc,11,131603.3636,0,24778.81818\n"
         ),
         encoding="utf-8",
     )
@@ -160,4 +161,3 @@ def test_join_sets_no_match_status_when_ccn_unmatched() -> None:
         assert joined["cms_avg_mdcr_pymt_amt"] is None
         assert joined["commercial_to_medicare_ratio"] is None
         assert DQ_JOIN_NO_CMS_MATCH in result.dataset_dq_flags
-

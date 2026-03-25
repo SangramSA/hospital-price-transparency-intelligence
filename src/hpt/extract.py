@@ -335,7 +335,9 @@ def iter_canonical_rows_from_file(
     if template_detection.template_family != "unknown":
         parser_strategy = template_detection.strategy_suffix
 
-    for pcl in _iter_procedure_charge_lines(file_path, template_family=template_detection.template_family):
+    for pcl in _iter_procedure_charge_lines(
+        file_path, template_family=template_detection.template_family
+    ):
         src_row = getattr(pcl, "source_row_index", None)
         src_json = getattr(pcl, "source_json_path", None)
         line_dq = getattr(pcl, "line_dq_flags", ())
@@ -400,7 +402,10 @@ def iter_canonical_rows_from_file(
                     line_dq,
                     (
                         template_detection.issues
-                        if (not template_detection.is_conformant and template_detection.template_version_raw)
+                        if (
+                            not template_detection.is_conformant
+                            and template_detection.template_version_raw
+                        )
                         else ()
                     ),
                 ),
@@ -503,4 +508,3 @@ def extract_canonical_rows_for_hospital(
         stream_threshold_bytes=stream_threshold_bytes,
         silver_output_dir=silver_output_dir,
     )
-

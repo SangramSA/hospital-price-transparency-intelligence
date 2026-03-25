@@ -76,4 +76,3 @@ def normalize_iso_utc_timestamp(ts_utc_iso: str) -> str:
     """Ensure timestamps remain in ISO format; extraction uses UTC now()."""
     # Minimal guard; extraction writes ISO UTC with 'Z'.
     return ts_utc_iso
-

@@ -122,7 +122,9 @@ def run_extract_hospitals(
             sha = read_active_download_sha256(raw_root=raw, hospital_key=key)
             out_path = result.jsonl_path
             if out_path is None and result.rows:
-                logger.warning("[%s] extract: no jsonl path despite rows; re-run with silver_output_dir", key)
+                logger.warning(
+                    "[%s] extract: no jsonl path despite rows; re-run with silver_output_dir", key
+                )
                 results.append(
                     ExtractHospitalResult(
                         hospital_key=key,

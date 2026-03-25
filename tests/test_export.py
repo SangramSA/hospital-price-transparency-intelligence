@@ -48,7 +48,9 @@ def test_export_deterministic_sort_and_artifacts() -> None:
                 negotiated_amount=200.0,
             ),
         ]
-        p.write_text("\n".join(json.dumps(r, sort_keys=True) for r in rows) + "\n", encoding="utf-8")
+        p.write_text(
+            "\n".join(json.dumps(r, sort_keys=True) for r in rows) + "\n", encoding="utf-8"
+        )
 
         out = root / "out"
         result = run_export(joined_root=root / "joined", output_dir=out, write_jsonl=True)

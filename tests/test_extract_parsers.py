@@ -170,7 +170,9 @@ def test_csv_tall_rowwise_negotiated_extraction() -> None:
         fp.write_text(body, encoding="utf-8")
         result = extract_canonical_rows_from_file(hospital, fp)
         rows = result.rows
-    negotiated = _pick(rows, procedure_code="27447", rate_type="negotiated", payer_name="ACME Health")
+    negotiated = _pick(
+        rows, procedure_code="27447", rate_type="negotiated", payer_name="ACME Health"
+    )
     assert len(negotiated) == 1
     r0 = negotiated[0]
     assert r0["parser_strategy"].startswith("csv_tall_variant|csv_")
@@ -191,7 +193,9 @@ def test_csv_tall_estimated_amount_fallback_for_negotiated() -> None:
         fp = Path(tmp) / "tall_estimated_fallback_standardcharges.csv"
         fp.write_text(body, encoding="utf-8")
         rows = extract_canonical_rows_from_file(hospital, fp).rows
-    negotiated = _pick(rows, procedure_code="27447", rate_type="negotiated", payer_name="ACME Health")
+    negotiated = _pick(
+        rows, procedure_code="27447", rate_type="negotiated", payer_name="ACME Health"
+    )
     assert len(negotiated) == 1
     r0 = negotiated[0]
     assert r0["negotiated_amount"] == 9876.54
@@ -309,4 +313,3 @@ def test_json_missing_payer_name_flag_on_valid_rows() -> None:
     good = _pick(rows, payer_name="Good Payer", rate_type="negotiated")
     assert len(good) == 1
     assert "missing_payer_name" in (good[0].get("dq_flags") or "")
-

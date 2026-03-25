@@ -338,4 +338,3 @@ def _iter_from_json_obj(
             implant=implant,
             line_dq_flags=tuple(dict.fromkeys(line_dq)),
         )
-

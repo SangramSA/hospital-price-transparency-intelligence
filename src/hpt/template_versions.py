@@ -136,10 +136,15 @@ def detect_json_template(path: Path) -> TemplateDetection:
                     pending_version_value = k == "version"
                     if k == "standard_charge_information":
                         break
-                elif pending_version_value and prefix == "version" and event in {
-                    "string",
-                    "number",
-                }:
+                elif (
+                    pending_version_value
+                    and prefix == "version"
+                    and event
+                    in {
+                        "string",
+                        "number",
+                    }
+                ):
                     version_raw = str(value)
                     pending_version_value = False
     except Exception as e:

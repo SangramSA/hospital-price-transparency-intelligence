@@ -40,7 +40,9 @@ def test_checkpoint_skip_when_sha_matches() -> None:
             source_content_sha256="deadbeef" * 8,
             silver_jsonl_relpath="h1/f.canonical.jsonl",
         )
-        assert read_active_download_sha256(raw_root=root / "raw", hospital_key="h1") == "deadbeef" * 8
+        assert (
+            read_active_download_sha256(raw_root=root / "raw", hospital_key="h1") == "deadbeef" * 8
+        )
         assert should_skip_extract(
             raw_root=root / "raw",
             silver_root=silver,
