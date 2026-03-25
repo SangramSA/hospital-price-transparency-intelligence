@@ -1,0 +1,61 @@
+{
+  "cms_match_status_counts": {
+    "matched_ccn_roster": 2821,
+    "no_match": 160
+  },
+  "dq_flag_token_counts": {
+    "(none)": 2453,
+    "algorithm_only_rate": 24,
+    "negotiated_amount_inferred_from_estimated": 454,
+    "percent_of_charges_noncomparable": 50
+  },
+  "generated_at": "2026-03-24T23:42:28Z",
+  "null_rates": {
+    "cms_avg_mdcr_pymt_amt": 0.053673,
+    "commercial_to_medicare_ratio": 0.518618,
+    "negotiated_amount": 0.381751
+  },
+  "parser_strategy_distribution": {
+    "csv_tall_variant|csv_v2": 573,
+    "csv_tall_variant|csv_v3": 70,
+    "csv_wide_standardcharges|csv_v2": 712,
+    "csv_wide_standardcharges|csv_v3": 401,
+    "json_nested_standard_charge_information|json_v2": 201,
+    "json_nested_standard_charge_information|json_v3": 1024
+  },
+  "rows_by_hospital": {
+    "adventist-health-reedley": 70,
+    "ascension-st-vincent-evansville": 1,
+    "atlanticare-regional-medical-center": 124,
+    "baylor-scott-white-ortho-spine-arlington": 183,
+    "grayling-hospital": 90,
+    "hillcrest-hospital-south": 180,
+    "hoag-orthopedic-institute": 14,
+    "honorhealth-deer-valley-medical-center": 462,
+    "merit-health-river-oaks": 176,
+    "new-england-baptist-hospital": 18,
+    "novant-health-forsyth-medical-center": 74,
+    "nyu-langone-orthopedic-hospital": 401,
+    "oak-hill-hospital": 1024,
+    "piedmont-hospital-atlanta": 60,
+    "warren-memorial-hospital": 104
+  },
+  "rows_total": 2981,
+  "source_joined_files": [
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/adventist-health-reedley/d2e9ea3cfcc51691_453220509_adventist-health---reedley_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/ascension-st-vincent-evansville/e168bedac504b0a4_350869065_st-marys-health-inc_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/atlanticare-regional-medical-center/3d51dba6a5ef22ea_210634549_atlanticare_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/baylor-scott-white-ortho-spine-arlington/05862e1a90f4b290_261578178_BaylorOrthopedicandSpineHospitalatArlington_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/grayling-hospital/82078eaa3953540d_471161992_munson-healthcare-grayling_standardcharges_1.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/hillcrest-hospital-south/f4bde5ad6ce6b284_45-2711804_Hillcrest-Hospital-South_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/hoag-orthopedic-institute/aa9422a7f9eca927_611588294_hoag-orthopedic-institute_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/honorhealth-deer-valley-medical-center/e4cfb9329fecb823_860181654_honorhealthdvmc_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/merit-health-river-oaks/4444905aa6386fe8_640626874_merit-health-river-oaks_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/new-england-baptist-hospital/b71a314286e073ba_042103612_new-england-baptist-hospital_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/novant-health-forsyth-medical-center/7024264950ccc444_56-0928089_novant_health_forsyth_medical_center_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/nyu-langone-orthopedic-hospital/768e2bac50dee41f_133971298-1669578324_nyu-langone-orthopedic-hospital_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/oak-hill-hospital/753cc173f6088a30_62-1113740_HCA-FLORIDA-OAK-HILL-HOSPITAL_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/piedmont-hospital-atlanta/fed528fd92354dd7_580566213_piedmont-atlanta-hospital_standardcharges.joined.jsonl",
+    "/Users/sangram/Personal_Projects/hospital-price-transparency-intelligence/data/processed/joined/warren-memorial-hospital/7beb5db63fe91127_540488103_warren-memorial-hospital-inc_standardcharges.joined.jsonl"
+  ]
+}
