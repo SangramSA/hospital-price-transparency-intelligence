@@ -32,7 +32,7 @@ An interactive Streamlit dashboard for exploring `combined.csv` — filter by ho
 
 ![Dashboard Overview](docs/assets/dashboard-overview.png)
 
-> **Live URL:** * hospital-price-transparency-intelligence.streamlit.app/(#https://hospital-price-transparency-intelligence.streamlit.app/)*
+> **Live URL:** *https://hospital-price-transparency-intelligence.streamlit.app/*
 
 **Run locally:**
 
